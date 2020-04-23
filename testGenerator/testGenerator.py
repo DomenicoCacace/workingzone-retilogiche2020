@@ -1,4 +1,5 @@
 import sys
+import os
 import random
 import getopt
 import math
@@ -11,9 +12,10 @@ def main(argv):
     numOfWorkingZones = int(getWorkingZoneNumber(argv))
     workingZoneSize = int(getWorkingZoneSize(argv))
     maxWorkingZone = int(memorySize - workingZoneSize)
+    filePath = getPath(argv)
 
-    filePath = "../"
     ramFile = open(filePath + "RAM_" + str(numOfTests) + "_cases.txt", "w")
+    barIsPrintable = True
 
     if numOfWorkingZones * workingZoneSize > memorySize:
         print("WorkingZones exceeding the memory size. The process will be terminated.")
@@ -56,11 +58,20 @@ def main(argv):
         # third test, address in a wz, asynchronous reset
         ramFile.write(genTest_addressInWZ(numOfWorkingZones, tests + .3, workingZoneSize, wzAddrList, coveredAddresses))
         # fourth test, address not in a WZ, first start signal
-        ramFile.write(genTest_addressOutOfWZ(numOfWorkingZones, tests + .4, workingZoneSize, wzAddrList, coverableAddresses))
+        ramFile.write(
+            genTest_addressOutOfWZ(numOfWorkingZones, tests + .4, workingZoneSize, wzAddrList, coverableAddresses))
         # fifth test, address not in a WZ, second start signal
-        ramFile.write(genTest_addressOutOfWZ(numOfWorkingZones, tests + .5, workingZoneSize, wzAddrList, coverableAddresses))
+        ramFile.write(
+            genTest_addressOutOfWZ(numOfWorkingZones, tests + .5, workingZoneSize, wzAddrList, coverableAddresses))
         # sixth test, address not in a WZ, asynchronous reset
-        ramFile.write(genTest_addressOutOfWZ(numOfWorkingZones, tests + .6, workingZoneSize, wzAddrList, coverableAddresses))
+        ramFile.write(
+            genTest_addressOutOfWZ(numOfWorkingZones, tests + .6, workingZoneSize, wzAddrList, coverableAddresses))
+        if (barIsPrintable):
+            try:
+                if barIsPrintable:
+                    updateProgressBar(tests, numOfTests)
+            except OSError:
+                barIsPrintable = False
 
 
 def genTest_addressInWZ(numOfWorkingZones, tests, workingZoneSize, wzAddrList, coveredAddresses):
@@ -117,15 +128,8 @@ def toOneHot(num, maxSize):
 
 
 def toBinary(num, maxSize):
-    temp = [0] * math.ceil(math.log2(maxSize))
-    binary = bin(num)[2:]
-    for i in range(0, len(binary)):
-        temp[i] = temp[i] ^ int(binary[i])
-    retString = ""
-    temp.reverse()
-    for i in range(0, len(temp)):
-        retString += str(temp[i])
-    return retString
+    getBin = lambda x, n: format(x, 'b').zfill(n)
+    return getBin(num, int(math.ceil(math.log2(maxSize))))
 
 
 def getNumOfTests(argv):
@@ -206,6 +210,35 @@ def getWorkingZoneSize(argv):
                 return int(defaultWZSize)
 
     return int(defaultWZSize)
+
+
+def getPath(argv):
+    defaultPath = "../"
+    try:
+        opts, args = getopt.getopt(argv, "o:", ["outputPath="])
+    except getopt.GetoptError:
+        return defaultPath
+
+    for opt, arg in opts:
+        if opt in ("-o", "--outputPath"):
+
+            if os.path.isdir(str(arg)):
+                return str(arg) + "/"
+
+    return defaultPath
+
+
+def updateProgressBar(done, total):
+    barLength, x = os.get_terminal_size()
+    barLength = math.floor(barLength / 2)
+    block = int(round(barLength * done / total))
+    if done < total:
+        status = ("Building test " + str(done) + "\r")
+    else:
+        status = ("Done!" + " " * int(barLength) + "\r")
+    text = "\rProgress: [{0}] {1}% {2}".format("#" * block + "-" * (barLength - block), done / total * 100, status)
+    sys.stdout.write(text)
+    sys.stdout.flush()
 
 
 # run
