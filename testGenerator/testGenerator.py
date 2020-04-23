@@ -236,7 +236,8 @@ def updateProgressBar(done, total):
         status = ("Building test " + str(done) + "\r")
     else:
         status = ("Done!" + " " * int(barLength) + "\r")
-    text = "\rProgress: [{0}] {1}% {2}".format("#" * block + "-" * (barLength - block), done / total * 100, status)
+    percentage = "%.3f" % round(done / total * 100, 3)
+    text = "\rProgress: [{0}] {1}% {2}".format("#" * block + "-" * (barLength - block), percentage, status)
     sys.stdout.write(text)
     sys.stdout.flush()
 
