@@ -7,23 +7,13 @@ import math
 
 # main
 def main(argv):
-    numOfTests = int(getNumOfTests(argv))
-    memorySize = int(getMemorySize(argv))
-    numOfWorkingZones = int(getWorkingZoneNumber(argv))
-    workingZoneSize = int(getWorkingZoneSize(argv))
+    (numOfTests, memorySize, numOfWorkingZones, workingZoneSize, filePath) = parseCmdLineArgs(argv)
     maxWorkingZone = int(memorySize - workingZoneSize)
-    filePath = getPath(argv)
 
-    ramFile = open(filePath + "RAM_" + str(numOfTests) + "_cases.txt", "w")
+    ramFile = open(filePath, "w")
     barIsPrintable = True
 
-    if numOfWorkingZones * workingZoneSize > memorySize:
-        print("WorkingZones exceeding the memory size. The process will be terminated.")
-        input()
-        exit(1)
-
     for tests in range(1, numOfTests + 1):
-
         coverableAddresses = []
         coveredAddresses = []
         wzAddrList = []
@@ -66,7 +56,7 @@ def main(argv):
         # sixth test, address not in a WZ, asynchronous reset
         ramFile.write(
             genTest_addressOutOfWZ(numOfWorkingZones, tests + .6, workingZoneSize, wzAddrList, coverableAddresses))
-        if (barIsPrintable):
+        if barIsPrintable:
             try:
                 if barIsPrintable:
                     updateProgressBar(tests, numOfTests)
@@ -132,100 +122,51 @@ def toBinary(num, maxSize):
     return getBin(num, int(math.ceil(math.log2(maxSize))))
 
 
-def getNumOfTests(argv):
-    defaultTests = 10
+def parseCmdLineArgs(argv):
+    testNum = 10
+    memSize = 128
+    wzNum = 8
+    wzSize = 4
+    outputFile = "../RAM_" + str(testNum) + "_tests.txt"
 
     try:
-        opts, args = getopt.getopt(argv, "n:", ["numTests="])
+        opts, args = getopt.getopt(argv, "hn:m:w:s:o:",
+                                   ["help", "numTests=", "memSize=", "wzNum=", "wzSize=", "outputFile"])
     except getopt.GetoptError:
-        return int(defaultTests)
+        sys.exit(2)
 
     for opt, arg in opts:
-        if opt in ("-n", "--numTests"):
+        if opt == '-h':
+            print("WorkingZone Test Generator Options")
+            print("\t-n\t--numTests\tnumber of complete tests to generate (default: " + str(testNum) + ")")
+            print("\t-m\t--memSize\tmaximum size of the memory (default: " + str(memSize) + ")")
+            print("\t-w\t--wzNum\tnumber of working zones (default: " + str(wzNum) + ")")
+            print("\t-s\t--wzSize\tnumber of addresses per working zone (default: " + str(wzSize) + ")")
+            print("\t-o\t--outputFile\toutput file (default: " + outputFile + ")")
+            sys.exit(0)
+        elif opt in ("-n", "--numTests"):
+            if int(arg) > 0:
+                testNum = arg
+                outputFile = "./RAM_" + str(testNum) + "_tests.txt"
+        elif opt in ("-m", "--memSize"):
+            if int(arg) > 0:
+                memSize = arg
+        elif opt in ("-w", "--wzNum"):
+            if int(arg) > 0:
+                wzNum = arg
+        elif opt in ("-s", "--wzSize"):
+            if int(arg) > 0:
+                wzSize = arg
+        elif opt in ("-o", "--outputFile"):
+            outputFile = arg
+        else:
+            continue
 
-            try:
-                if int(arg) > 0:
-                    return int(arg)
-            except ValueError:
-                return int(defaultTests)
+        if int(memSize) < int(wzSize) * int(wzNum):
+            print("Invalid parameters. Exiting...")
+            sys.exit(1)
 
-    return int(defaultTests)
-
-
-def getMemorySize(argv):
-    defaultMemorySize = 128
-
-    try:
-        opts, args = getopt.getopt(argv, "m:", ["memSize="])
-    except getopt.GetoptError:
-        return int(defaultMemorySize)
-
-    for opt, arg in opts:
-        if opt in ("-m", "--memSize"):
-
-            try:
-                if int(arg) > 0:
-                    return int(arg)
-            except ValueError:
-                return int(defaultMemorySize)
-
-    return int(defaultMemorySize)
-
-
-def getWorkingZoneNumber(argv):
-    defaultWZNum = 8
-
-    try:
-        opts, args = getopt.getopt(argv, "w:", ["wzNum="])
-    except getopt.GetoptError:
-        return int(defaultWZNum)
-
-    for opt, arg in opts:
-        if opt in ("-w", "--wzNum"):
-
-            try:
-                if int(arg) > 0:
-                    return int(arg)
-            except ValueError:
-                return int(defaultWZNum)
-
-    return int(defaultWZNum)
-
-
-def getWorkingZoneSize(argv):
-    defaultWZSize = 4
-
-    try:
-        opts, args = getopt.getopt(argv, "s:", ["wzSize="])
-    except getopt.GetoptError:
-        return int(defaultWZSize)
-
-    for opt, arg in opts:
-        if opt in ("-s", "--wzSize"):
-
-            try:
-                if int(arg) > 0:
-                    return int(arg)
-            except ValueError:
-                return int(defaultWZSize)
-
-    return int(defaultWZSize)
-
-
-def getPath(argv):
-    defaultPath = "../"
-    try:
-        opts, args = getopt.getopt(argv, "o:", ["outputPath="])
-    except getopt.GetoptError:
-        return defaultPath
-
-    for opt, arg in opts:
-        if opt in ("-o", "--outputPath"):
-
-            if os.path.isdir(str(arg)):
-                return str(arg) + "/"
-
-    return defaultPath
+    return int(testNum), int(memSize), int(wzNum), int(wzSize), str(outputFile)
 
 
 def updateProgressBar(done, total):
