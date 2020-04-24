@@ -137,7 +137,7 @@ def parseCmdLineArgs(argv):
 
     for opt, arg in opts:
         if opt == '-h':
-            print("WorkingZone Test Generator Options")
+            print("\nWorkingZone Test Generator Options\n")
             print("\t-n\t--numTests\tnumber of complete tests to generate (default: " + str(testNum) + ")")
             print("\t-m\t--memSize\tmaximum size of the memory (default: " + str(memSize) + ")")
             print("\t-w\t--wzNum\tnumber of working zones (default: " + str(wzNum) + ")")
