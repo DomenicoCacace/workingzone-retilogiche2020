@@ -22,50 +22,52 @@ def main(argv):
         results = open(outputFile, "w")
         failed = open(failedFile, "w")
         with open(str(inputFile)) as fileobject:
+            try:
+                for testOutcome in fileobject:
+                    parsedLine = readline(testOutcome)
 
-            for testOutcome in fileobject:
-                parsedLine = readline(testOutcome)
-
-                if parsedLine[0] != "TOTAL TIME":
-                    totalTests += 1
-                    if parsedLine[2] == "PASSED":
-                        timings[int(parsedLine[1]) - 1].append(float(parsedLine[3]))
-                        totalPassed += 1
+                    if parsedLine[0] != "TOTAL TIME":
+                        totalTests += 1
+                        if parsedLine[2] == "PASSED":
+                            timings[int(parsedLine[1]) - 1].append(float(parsedLine[3]))
+                            totalPassed += 1
+                        else:
+                            failed.write(testOutcome + "\n")
+                            continue
+                        if parsedLine[4] != "NA":
+                            asyncResetClocks.append(int(parsedLine[4]))
                     else:
-                        failed.write(testOutcome + "\n")
-                        continue
-                    if parsedLine[4] != "NA":
-                        asyncResetClocks.append(int(parsedLine[4]))
-                else:
-                    results.write("\tGENERAL RESULTS\n")
-                    results.write("Total Time: " + str(parsedLine[1]) + "h " + str(parsedLine[2]) +
-                                  "m " + str(parsedLine[3]) + "s " + str(parsedLine[4]) + "ms\n")
-                    results.write("Total tests run: " + str(totalTests) + "; Success ratio: " + str(
-                        totalPassed / totalTests) + "\n")
-                    results.write("Tests passed: " + str(totalPassed) + "; Tests Failed: " + str(
-                        totalTests - totalPassed) + "\n\n")
-                    results.write("\tPER-TYPE RESULTS\n\n")
+                        results.write("\tGENERAL RESULTS\n")
+                        results.write("Total Time: " + str(parsedLine[1]) + "h " + str(parsedLine[2]) +
+                                      "m " + str(parsedLine[3]) + "s " + str(parsedLine[4]) + "ms\n")
+                        results.write("Total tests run: " + str(totalTests) + "; Success ratio: " + str(
+                            totalPassed / totalTests) + "\n")
+                        results.write("Tests passed: " + str(totalPassed) + "; Tests Failed: " + str(
+                            totalTests - totalPassed) + "\n\n")
+                        results.write("\tPER-TYPE RESULTS\n\n")
 
-                    for i in range(6):
-                        results.write(str(i+1) + ". " + testDesc[i].upper() + "\n")
-                        results.write("Total tests: " + str(totalTests/6) + "; Success ratio: " +
-                                      str(np.size(timings[i])/(totalTests/6)) + "\n")
-                        results.write("Min time: " + str(np.min(timings[i])) + " μs; \n")
-                        results.write("Max time: " + str(np.max(timings[i])) + " μs; \n")
-                        results.write("Avg time: " + str(np.average(timings[i])) + " μs; \n")
-                        results.write("Std deviation: " + str(round(float(np.std(timings[i])), 5)) + " μs; \n\n")
-                    results.write("ASYNCHRONOUS RESET SIGNAL: CYCLES BETWEEN START AND RESET\n\n")
-                    results.write("Min time: " + str(np.min(asyncResetClocks)) + " cycles (" + str(
-                        np.min(asyncResetClocks) * 100) + " ns);\n")
-                    results.write("Max time: " + str(np.max(asyncResetClocks)) + " cycles (" + str(
-                        np.max(asyncResetClocks) * 100) + " ns);\n")
-                    results.write("Avg time: " + str(np.average(asyncResetClocks)) + " cycles (" + str(
-                        np.average(asyncResetClocks)*100) + " ns);\n")
-                    results.write("Std deviation: " + str(round(float(np.std(asyncResetClocks)), 5)) + " cycles (" + str(
-                        round(float(np.std(asyncResetClocks)), 5) * 100) + " ns);\n")
-                    fileobject.close()
+                        for i in range(6):
+                            results.write(str(i+1) + ". " + testDesc[i].upper() + "\n")
+                            results.write("Total tests: " + str(totalTests/6) + "; Success ratio: " +
+                                          str(np.size(timings[i])/(totalTests/6)) + "\n")
+                            results.write("Min time: " + str(np.min(timings[i])) + " micros (" + str(math.ceil(float(np.min(timings[i])*10))) + "cycles);\n")
+                            results.write("Max time: " + str(np.max(timings[i])) + " micros (" + str(math.ceil(float(np.max(timings[i])*10))) + "cycles);\n")
+                            results.write("Avg time: " + str(np.average(timings[i])) + " micros (" + str(math.ceil(float(np.average(timings[i])*10))) + "cycles);\n")
+                            results.write("Std deviation: " + str(round(float(np.std(timings[i])), 5)) + " micros (" + str(math.ceil(float(np.std(timings[i])*10))) + "cycles);\n\n")
+                        results.write("ASYNCHRONOUS RESET SIGNAL: CYCLES BETWEEN START AND RESET\n\n")
+                        results.write("Min time: " + str(np.min(asyncResetClocks)) + " cycles (" + str(
+                            np.min(asyncResetClocks) * 100) + " ns);\n")
+                        results.write("Max time: " + str(np.max(asyncResetClocks)) + " cycles (" + str(
+                            np.max(asyncResetClocks) * 100) + " ns);\n")
+                        results.write("Avg time: " + str(np.average(asyncResetClocks)) + " cycles (" + str(
+                            np.average(asyncResetClocks)*100) + " ns);\n")
+                        results.write("Std deviation: " + str(round(float(np.std(asyncResetClocks)), 5)) + " cycles (" + str(
+                            round(float(np.std(asyncResetClocks)), 5) * 100) + " ns);\n")
+                        fileobject.close()
 
-                    break
+                        break
+            except:
+                print("File error. Exiting.")
 
     except FileNotFoundError:
         print("An error has occurred. Exiting.")
@@ -92,11 +94,11 @@ def parseCmdLineArgs(argv):
             print("\t-f\t--failedFile\tfailed tests (default: " + failedFile + ")")
             sys.exit(0)
         elif opt in ("-i", "--inputFile"):
-            outputFile = arg
+            inputFile = arg
         elif opt in ("-o", "--outputFile"):
             outputFile = arg
         elif opt in ("-f", "--failedFile"):
-            outputFile = arg
+            failedFile = arg
 
     return str(inputFile), str(outputFile), str(failedFile)
 
