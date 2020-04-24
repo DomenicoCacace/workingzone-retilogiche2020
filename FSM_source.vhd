@@ -1,6 +1,14 @@
-----------------------------------------------------------------------------------
+--------------------------------------------------------------------------------
+--                        Prova Finale di Reti Logiche                        --
+--                              FSM_source.vhd                                --
+-- Anno Accademico 2019/2020                                                  --
+-- Prof. William Fornaciari                                                   --
+--                                                                            --
+-- Studente: Domenico Cacace                                                  --
+-- Codice Persona: [REDACTED]                                                 --
+-- Matricola: [REDACTED]                                                      --
+--------------------------------------------------------------------------------
 
-----------------------------------------------------------------------------------
 library IEEE;
 use IEEE.STD_LOGIC_1164.ALL;
 use IEEE.STD_LOGIC_UNSIGNED.ALL;
@@ -29,7 +37,7 @@ architecture Behavioral of project_reti_logiche is
     ---i/o signals---
     signal nextMemEnable, nextMemWriteEnable, nextOperationDone : std_logic := '0';   --memory enable signals and end of operation flag
     signal nextMemAddress : std_logic_vector (15 downto 0) := "0000000000000000";     --memory address to fetch/write
-    signal nextDataToMemory : std_logic_vector (7 downto 0) := "00000000";    --data to be written on memory
+    signal nextDataToMemory : std_logic_vector (7 downto 0) := "00000000";    --data to be written to memory
 
     ---Working Zone address and data---
     signal workingZoneAddress, nextWorkingZoneAddress : std_logic_vector (15 downto 0) := "0000000000000000";      --address of the next working zone to fetch
