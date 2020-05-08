@@ -37,7 +37,7 @@ architecture Behavioral of project_reti_logiche is
     ---i/o signals---
     signal nextMemEnable, nextMemWriteEnable, nextOperationDone : std_logic := '0';   --memory enable signals and end of operation flag
     signal nextMemAddress : std_logic_vector (15 downto 0) := "0000000000000000";     --memory address to fetch/write
-    signal nextDataToMemory : std_logic_vector (7 downto 0) := "00000000";    --data to be written to memory
+    signal nextDataToMemory : std_logic_vector (7 downto 0) := "00000000";    --data to be written on memory
 
     ---Working Zone address and data---
     signal workingZoneAddress, nextWorkingZoneAddress : std_logic_vector (15 downto 0) := "0000000000000000";      --address of the next working zone to fetch
@@ -157,37 +157,35 @@ architecture Behavioral of project_reti_logiche is
 
             when WZ_CHECK =>
 
-                if (to_integer(unsigned(workingZoneAddress)) < 8) then  --true when there are non-analyzed working zones
+                if ((to_integer(unsigned(addressToEncode)) - to_integer(unsigned(workingZoneData)) < 4) and
+                    (to_integer(unsigned(addressToEncode)) - to_integer(unsigned(workingZoneData)) > -1))then   --the difference is at most 3 and positive
 
-                    if ((to_integer(unsigned(addressToEncode)) - to_integer(unsigned(workingZoneData)) < 4) and
-                        (to_integer(unsigned(addressToEncode)) - to_integer(unsigned(workingZoneData)) > -1))then   --the difference is at most 3 and positive
+                    nextEncodedAddress(7) <= '1';   --WZ_BIT set to 1
+                    nextEncodedAddress(6 downto 4) <= workingZoneAddress(2 downto 0);   --number of the Working Zone
 
-                        nextEncodedAddress(7) <= '1';   --WZ_BIT set to 1
-                        nextEncodedAddress(6 downto 4) <= workingZoneAddress(2 downto 0);   --number of the Working Zone
+                    case (to_integer(unsigned(addressToEncode(1 downto 0) - workingZoneData(1 downto 0)))) is    --Calculate the offset in One-hot encoding
+                        when 0 =>
+                            nextEncodedAddress(3 downto 0) <= "0001";
+                        when 1 =>
+                            nextEncodedAddress(3 downto 0) <= "0010";
+                        when 2 =>
+                            nextEncodedAddress(3 downto 0) <= "0100";
+                        when 3 =>
+                            nextEncodedAddress(3 downto 0) <= "1000";
+                        when others =>
+                            --never gets here
+                            nextEncodedAddress <= addressToEncode;
+                    end case;
+                    nextState <= ADDR_WRITE;    --break the cycle and write the result on memory
 
-                        case (to_integer(unsigned(addressToEncode(1 downto 0) - workingZoneData(1 downto 0)))) is    --Calculate the offset in One-hot encoding
-                            when 0 =>
-                                nextEncodedAddress(3 downto 0) <= "0001";
-                            when 1 =>
-                                nextEncodedAddress(3 downto 0) <= "0010";
-                            when 2 =>
-                                nextEncodedAddress(3 downto 0) <= "0100";
-                            when 3 =>
-                                nextEncodedAddress(3 downto 0) <= "1000";
-                            when others =>
-                                --never gets here
-                                nextEncodedAddress <= addressToEncode;
-                        end case;
-                        nextState <= ADDR_WRITE;    --break the cycle and write the result on memory
-
-                    else    --check the next working zone
-                        nextWorkingZoneAddress <= workingZoneAddress + "0000000000000001";
+                else    --check the next working zone
+                    nextWorkingZoneAddress <= workingZoneAddress + "0000000000000001";
+                    if (to_integer(unsigned(workingZoneAddress)) > 6) then  --true when all working zones have been analyzed
+                        nextEncodedAddress <= addressToEncode;
+                        nextState <= ADDR_WRITE;
+                    else
                         nextState <= WZ_FETCH;
                     end if;
-
-                else    --checked all working zones, no correspondence found
-                    nextEncodedAddress <= addressToEncode;
-                    nextState <= ADDR_WRITE;
                 end if;
             ---END WZ_CHECK---
 
